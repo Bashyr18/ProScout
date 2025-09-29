@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ProScout - AI Procurement Assistant</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            fontFamily: {
+              sans: ['Space Grotesk', 'sans-serif'],
+            },
+            colors: {
+              'bg-primary': 'var(--color-bg-primary)',
+              'bg-secondary': 'var(--color-bg-secondary)',
+              'border-accent': 'var(--color-border-accent)',
+              'accent-hover': 'var(--color-accent-hover)',
+              'text-primary': 'var(--color-text-primary)',
+              'text-secondary': 'var(--color-text-secondary)',
+              'accent': 'var(--color-accent-primary)',
+              'accent-text': 'var(--color-accent-text)',
+              
+              'danger-fg': 'var(--color-danger-fg)',
+              'danger-bg': 'var(--color-danger-bg)',
+              'danger-border': 'var(--color-danger-border)',
+              
+              'warning-fg': 'var(--color-warning-fg)',
+              'warning-bg': 'var(--color-warning-bg)',
+              'warning-border': 'var(--color-warning-border)',
+              
+              'success-fg': 'var(--color-success-fg)',
+              'success-bg': 'var(--color-success-bg)',
+              'success-border': 'var(--color-success-border)',
+
+              'info-fg': 'var(--color-info-fg)',
+              'info-bg': 'var(--color-info-bg)',
+              'info-border': 'var(--color-info-border)',
+            },
+            animation: {
+                'fade-in': 'fadeIn 0.5s ease-in-out',
+                'slide-in-up': 'slideInUp 0.5s ease-in-out',
+                'slide-down': 'slideDown 0.3s ease-out',
+                'slide-in-bottom': 'slideInBottom 0.3s ease-out',
+                'slide-in-left': 'slideInLeft 0.3s ease-out',
+                'point-left': 'pointLeft 1.5s infinite ease-in-out',
+                'point-down': 'pointDown 1.5s infinite ease-in-out',
+            },
+            keyframes: {
+                fadeIn: {
+                    '0%': { opacity: '0' },
+                    '100%': { opacity: '1' },
+                },
+                slideInUp: {
+                    '0%': { transform: 'translateY(20px)', opacity: '0' },
+                    '100%': { transform: 'translateY(0)', opacity: '1' },
+                },
+                 slideDown: {
+                    '0%': { transform: 'translateY(-20px)', opacity: '0' },
+                    '100%': { transform: 'translateY(0)', opacity: '1' },
+                },
+                slideInBottom: {
+                  '0%': { transform: 'translateY(100%)', opacity: '0.8' },
+                  '100%': { transform: 'translateY(0)', opacity: '1' },
+                },
+                slideInLeft: {
+                    '0%': { transform: 'translateX(-100%)' },
+                    '100%': { transform: 'translateX(0)' },
+                },
+                pulseGlow: {
+                  '0%': { transform: 'scale(0.9)' },
+                  '100%': { transform: 'scale(1.2)' },
+                },
+                sonarWave: {
+                    '0%': { transform: 'scale(0.5)', opacity: '0' },
+                    '50%': { opacity: '0.2' },
+                    '100%': { transform: 'scale(2.5)', opacity: '0' },
+                },
+                pointLeft: {
+                    '0%, 100%': { transform: 'translateX(0)' },
+                    '50%': { transform: 'translateX(-8px)' },
+                },
+                pointDown: {
+                    '0%, 100%': { transform: 'translateY(0)' },
+                    '50%': { transform: 'translateY(8px)' },
+                },
+            }
+          }
+        }
+      }
+    </script>
+    <style>
+      :root[data-theme="dark"] {
+        --color-bg-primary: #0D1B2A;
+        --color-bg-secondary: #1B263B;
+        --color-border-accent: #415A77;
+        --color-accent-hover: #778DA9;
+        --color-text-primary: #E0E1DD;
+        --color-text-secondary: #778DA9;
+        --color-accent-primary: #00F5D4;
+        --color-accent-text: #0D1B2A;
+
+        --color-danger-fg: #f87171; /* red-400 */
+        --color-danger-bg: #450a0a; /* red-900 */
+        --color-danger-border: #7f1d1d; /* red-800 */
+        
+        --color-warning-fg: #facc15; /* yellow-400 */
+        --color-warning-bg: #422006; /* yellow-900 */
+        --color-warning-border: #713f12; /* yellow-700 */
+
+        --color-success-fg: #86efac; /* green-300 */
+        --color-success-bg: #14532d; /* green-900 */
+        --color-success-border: #166534; /* green-700 */
+
+        --color-info-fg: #93c5fd; /* blue-300 */
+        --color-info-bg: #1e3a8a; /* blue-900 */
+        --color-info-border: #1e40af; /* blue-700 */
+      }
+      :root[data-theme="light"] {
+        --color-bg-primary: #F9FAFB; /* gray-50 */
+        --color-bg-secondary: #FFFFFF;
+        --color-border-accent: #D1D5DB; /* gray-300 */
+        --color-accent-hover: #E5E7EB; /* gray-200 */
+        --color-text-primary: #1F2937; /* gray-800 */
+        --color-text-secondary: #6B7280; /* gray-500 */
+        --color-accent-primary: #3B82F6; /* blue-500 */
+        --color-accent-text: #FFFFFF;
+
+        --color-danger-fg: #dc2626; /* red-600 */
+        --color-danger-bg: #fee2e2; /* red-100 */
+        --color-danger-border: #fca5a5; /* red-300 */
+
+        --color-warning-fg: #d97706; /* yellow-600 */
+        --color-warning-bg: #fef3c7; /* yellow-100 */
+        --color-warning-border: #fcd34d; /* yellow-300 */
+        
+        --color-success-fg: #16a34a; /* green-600 */
+        --color-success-bg: #dcfce7; /* green-100 */
+        --color-success-border: #86efac; /* green-300 */
+
+        --color-info-fg: #2563eb; /* blue-600 */
+        --color-info-bg: #dbeafe; /* blue-100 */
+        --color-info-border: #93c5fd; /* blue-300 */
+      }
+      :root[data-theme="midnight"] {
+        --color-bg-primary: #0a0a1a;
+        --color-bg-secondary: #121224;
+        --color-border-accent: #39395f;
+        --color-accent-hover: #50507a;
+        --color-text-primary: #EAEAEA;
+        --color-text-secondary: #8888A0;
+        --color-accent-primary: #F021B5;
+        --color-accent-text: #0a0a1a;
+        
+        --color-danger-fg: #ff5555;
+        --color-danger-bg: #4d0000;
+        --color-danger-border: #800000;
+        
+        --color-warning-fg: #f1fa8c;
+        --color-warning-bg: #504711;
+        --color-warning-border: #8a7d1b;
+        
+        --color-success-fg: #50fa7b;
+        --color-success-bg: #114221;
+        --color-success-border: #186330;
+
+        --color-info-fg: #8be9fd;
+        --color-info-bg: #1f3c63;
+        --color-info-border: #2e5a94;
+      }
+      body {
+        font-family: 'Space Grotesk', sans-serif;
+        background-color: var(--color-bg-primary);
+        color: var(--color-text-primary);
+        transition: background-color 0.3s ease, color 0.3s ease;
+      }
+      .modal-open {
+        overflow: hidden;
+      }
+      .sonar-ping {
+        animation: sonarPing 2.5s infinite ease-out;
+        background-color: var(--color-accent-primary);
+      }
+       .sonar-wave {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        border-radius: 50%;
+        background-color: var(--color-accent-primary);
+        opacity: 0;
+        animation: sonarWave 3s infinite;
+      }
+      @keyframes sonarPing {
+        0% { transform: scale(0.3); opacity: 0.8; }
+        90% { transform: scale(2.5); opacity: 0; }
+        100% { transform: scale(0); opacity: 0; }
+      }
+      /* Custom Scrollbar */
+      ::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+      }
+      ::-webkit-scrollbar-track {
+        background: var(--color-bg-secondary);
+      }
+      ::-webkit-scrollbar-thumb {
+        background: var(--color-border-accent);
+        border-radius: 4px;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: var(--color-accent-hover);
+      }
+      /* Prose theming */
+      .prose { color: var(--color-text-secondary); }
+      .prose h1, .prose h2, .prose h3, .prose h4, .prose h5, .prose h6, .prose strong { color: var(--color-text-primary); }
+      .prose a { color: var(--color-accent-primary); text-decoration: none; }
+      .prose a:hover { opacity: 0.8; }
+      .prose ul > li::before { background-color: var(--color-text-secondary); }
+      .prose blockquote { color: var(--color-text-secondary); border-left-color: var(--color-border-accent); }
+      .prose code { color: var(--color-text-primary); background-color: var(--color-bg-primary); padding: 0.2em 0.4em; border-radius: 6px; font-weight: 600; }
+       /* Glow animation for new opportunities */
+      .glow-fade-out {
+          animation: glow-fade 7s ease-out forwards;
+          --glow-color: var(--color-accent-primary);
+      }
+      @keyframes glow-fade {
+          0% { box-shadow: 0 0 12px 2px var(--glow-color), inset 0 0 10px 1px var(--glow-color); }
+          15% { box-shadow: 0 0 12px 2px var(--glow-color), inset 0 0 10px 1px var(--glow-color); }
+          100% { box-shadow: 0 0 0px 0px transparent, inset 0 0 0px 0px transparent; }
+      }
+      /* Welcome Page Background Glow */
+      .welcome-bg-glow::before, .welcome-bg-glow::after {
+          content: '';
+          position: absolute;
+          z-index: 0;
+          border-radius: 50%;
+          filter: blur(120px);
+          opacity: 0.15;
+          pointer-events: none;
+      }
+      .welcome-bg-glow::before {
+          width: 500px;
+          height: 500px;
+          background-color: var(--color-accent-primary);
+          top: -20%;
+          left: -10%;
+          animation: pulseGlow 8s infinite alternate;
+      }
+      .welcome-bg-glow::after {
+          width: 400px;
+          height: 400px;
+          background-color: var(--color-border-accent);
+          bottom: -20%;
+          right: -10%;
+          animation: pulseGlow 10s infinite alternate-reverse;
+      }
+      /* ShepherdJS Theming */
+      .shepherd-element {
+        background-color: var(--color-bg-secondary);
+        border: 1px solid var(--color-border-accent);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        border-radius: 8px;
+        max-width: 400px;
+      }
+      .shepherd-header {
+        background-color: var(--color-bg-primary);
+        padding: 1rem 1rem 0.5rem;
+      }
+      .shepherd-title {
+        color: var(--color-text-primary);
+        font-weight: bold;
+      }
+      .shepherd-cancel-icon {
+        color: var(--color-text-secondary);
+      }
+      .shepherd-cancel-icon:hover {
+        color: var(--color-text-primary);
+      }
+      .shepherd-text {
+        color: var(--color-text-secondary);
+        padding: 0.5rem 1rem;
+        font-size: 0.95rem;
+        line-height: 1.5;
+      }
+      .shepherd-button {
+        border-radius: 6px;
+        padding: 0.65rem 1.25rem;
+        font-weight: bold;
+        transition: all 0.2s ease-in-out;
+      }
+      .shepherd-button-primary {
+        background-color: var(--color-accent-primary);
+        color: var(--color-accent-text);
+      }
+      .shepherd-button-primary:hover {
+        background-color: var(--color-accent-primary);
+        opacity: 0.9;
+      }
+      .shepherd-button-secondary {
+        background-color: var(--color-border-accent);
+        color: var(--color-text-primary);
+      }
+      .shepherd-button-secondary:hover {
+        background-color: var(--color-accent-hover);
+      }
+      .shepherd-arrow, .shepherd-arrow:before {
+          background-color: var(--color-bg-secondary);
+          border: 1px solid var(--color-border-accent);
+      }
+      [data-popper-placement^=top] > .shepherd-arrow {
+          border-bottom: none;
+          border-right: none;
+      }
+      [data-popper-placement^=bottom] > .shepherd-arrow {
+          border-top: none;
+          border-left: none;
+      }
+      [data-popper-placement^=left] > .shepherd-arrow {
+          border-right: none;
+          border-top: none;
+      }
+      [data-popper-placement^=right] > .shepherd-arrow {
+          border-left: none;
+          border-bottom: none;
+      }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.11/purify.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/shepherd.js@10.0.1/dist/js/shepherd.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/shepherd.js@10.0.1/dist/css/shepherd.css"/>
+    <script src="https://checkout.flutterwave.com/v3.js"></script>
+  <script type="importmap">
+{
+  "imports": {
+    "react": "https://esm.sh/react@18.2.0",
+    "react-dom/client": "https://esm.sh/react-dom@18.2.0/client",
+    "react/": "https://esm.sh/react@18.2.0/",
+    "@google/genai": "https://esm.sh/@google/genai@^1.8.0",
+    "zustand": "https://esm.sh/zustand@^4.5.4?deps=react@18.2.0",
+    "zustand/": "https://esm.sh/zustand@^4.5.4/?deps=react@18.2.0",
+    "@tanstack/react-virtual": "https://esm.sh/@tanstack/react-virtual@3.8.0?deps=react@18.2.0",
+    "idb": "https://esm.sh/idb@8.0.0",
+    "immer": "https://esm.sh/immer@^10.1.1",
+    "date-fns": "https://esm.sh/date-fns@^3.6.0",
+    "react-dom": "https://esm.sh/react-dom@18.2.0",
+    "react-dom/": "https://esm.sh/react-dom@18.2.0/"
+  }
+}
+</script>
+</head>
+  <body class="antialiased">
+    <div id="root"></div>
+    <div id="modal-root"></div>
+    <script type="module" src="/index.tsx"></script>
+  </body>
+</html>

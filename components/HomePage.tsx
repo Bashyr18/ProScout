@@ -1,0 +1,228 @@
+import React, { useState, useMemo, useEffect } from 'react';
+import { useAppStore } from '../store/useAppStore.ts';
+
+import Header from './Header.tsx';
+import Sidebar from './Sidebar.tsx';
+import OpportunityTable from './OpportunityTable.tsx';
+import InsightsPanel from './InsightsPanel.tsx';
+import AgentStatusPanel from './AgentStatusPanel.tsx';
+import WelcomePanel from './WelcomePanel.tsx';
+import BottomNav from './BottomNav.tsx';
+import SearchResultPanel from './SearchResultPanel.tsx';
+import PaymentVerificationPage from './PaymentVerificationPage.tsx';
+import OnboardingTour from './OnboardingTour.tsx';
+import AdvancedFiltersPanel from './AdvancedFiltersPanel.tsx';
+import AgentPanel from './AgentPanel.tsx';
+import ToastContainer from './ToastContainer.tsx';
+import { TableCellsIcon, TuneIcon, RobotIcon, CloseIcon } from './icons.tsx';
+import EmptyStatePanel from './EmptyStatePanel.tsx';
+
+const HomePage: React.FC = () => {
+    const [isMobileSearchPanelOpen, setIsMobileSearchPanelOpen] = useState(false);
+    const [isVerifyingPayment, setIsVerifyingPayment] = useState(false);
+    const [shouldStartTour, setShouldStartTour] = useState(false);
+    const [isFilterPanelOpen, setIsFilterPanelOpen] = useState(false);
+    const store = useAppStore();
+
+    useEffect(() => {
+        const queryParams = new URLSearchParams(window.location.search);
+        if (queryParams.has('status') && queryParams.has('tx_ref') && queryParams.has('transaction_id')) {
+            setIsVerifyingPayment(true);
+        }
+    }, []);
+
+    // --- DERIVED STATE USING MEMOIZATION FOR PERFORMANCE ---
+    const allOpportunities = useMemo(() => {
+        return store.opportunityIds.map(id => store.opportunitiesById[id]);
+    }, [store.opportunityIds, store.opportunitiesById]);
+    
+    const filteredOpportunities = useMemo(() => {
+        const lowerCaseQuery = store.clientSearchQuery.toLowerCase();
+        const { status, relevance, deadline } = store.advancedFilters;
+
+        return allOpportunities.filter(op => {
+            // Keyword search
+            const keywordMatch = !lowerCaseQuery || (
+                (op.Title || '').toLowerCase().includes(lowerCaseQuery) ||
+                (op.Organization || '').toLowerCase().includes(lowerCaseQuery) ||
+                (op.Location || '').toLowerCase().includes(lowerCaseQuery)
+            );
+            if (!keywordMatch) return false;
+
+            // Advanced Filters
+            const statusMatch = status.length === 0 || status.includes(op.status);
+            if (!statusMatch) return false;
+
+            const relevanceMatch = op.Relevance >= relevance[0] && op.Relevance <= relevance[1];
+            if (!relevanceMatch) return false;
+
+            if (op.Deadline) {
+                try {
+                    const deadlineDate = new Date(op.Deadline);
+                    if(isNaN(deadlineDate.getTime())) {
+                        if(deadline.start || deadline.end) return false;
+                    } else {
+                        if (deadline.start && deadlineDate < new Date(deadline.start)) return false;
+                        if (deadline.end && deadlineDate > new Date(deadline.end)) return false;
+                    }
+                } catch {
+                     if(deadline.start || deadline.end) return false;
+                }
+            } else {
+                 if(deadline.start || deadline.end) return false;
+            }
+
+            return true;
+        });
+    }, [allOpportunities, store.clientSearchQuery, store.advancedFilters]);
+
+    const totalOpportunities = useMemo(() => allOpportunities.length, [allOpportunities]);
+
+    // --- END OF DERIVED STATE ---
+
+    useEffect(() => {
+        const tourCompleted = localStorage.getItem('proscout-tour-completed');
+        if (store.isAuthenticated && totalOpportunities === 0 && !store.isAgentSearching) {
+            const timer = setTimeout(() => setShouldStartTour(true), 1500);
+            return () => clearTimeout(timer);
+        }
+    }, [store.isAuthenticated, totalOpportunities, store.isAgentSearching]);
+    
+    const ViewToggle = () => (
+         <div className="flex items-center bg-bg-primary p-1 rounded-full border border-border-accent">
+            <button
+                onClick={() => store.setActiveView('table')}
+                className={`flex items-center space-x-2 text-sm font-semibold px-4 py-1.5 rounded-full transition-colors ${store.activeView === 'table' ? 'bg-accent text-accent-text' : 'text-text-secondary hover:bg-border-accent'}`}
+            >
+                <TableCellsIcon className="w-5 h-5" />
+                <span>Table</span>
+            </button>
+             {store.hasProFeatures() && (
+                 <button
+                    onClick={() => store.setActiveView('agents')}
+                    className={`flex items-center space-x-2 text-sm font-semibold px-4 py-1.5 rounded-full transition-colors ${store.activeView === 'agents' ? 'bg-accent text-accent-text' : 'text-text-secondary hover:bg-border-accent'}`}
+                >
+                    <RobotIcon className="w-5 h-5" />
+                    <span>Agents</span>
+                </button>
+            )}
+        </div>
+    );
+
+    const mainContent = (
+        <>
+            {isVerifyingPayment ? (
+                <PaymentVerificationPage />
+            ) : !store.isAuthenticated ? (
+                <WelcomePanel />
+            ) : (
+                // AUTHENTICATED USER VIEW
+                <>
+                    {/* Top-level banner for search results */}
+                    {store.lastSearchReport && !store.isAgentSearching && (
+                         <SearchResultPanel
+                            message={store.lastSearchReport.message}
+                            onDismiss={() => store.setLastSearchReport(null)}
+                        />
+                    )}
+
+                    {/* Agent searching takes over the main content area */}
+                    {store.isAgentSearching && store.agentMission && store.agentProgress ? (
+                        <AgentStatusPanel mission={store.agentMission} progress={store.agentProgress} onCancel={store.cancelAgent} />
+                    ) : (
+                        // Normal dashboard view when not searching
+                        <>
+                            <InsightsPanel insights={store.insights} isLoading={store.isGeneratingInsights} />
+                            
+                            <div className="flex flex-col md:flex-row md:items-center md:space-x-4 mb-4" data-tour="filter-bar">
+                                <input
+                                    type="text"
+                                    value={store.clientSearchQuery}
+                                    onChange={(e) => store.setClientSearchQuery(e.target.value)}
+                                    placeholder="Filter results by keyword..."
+                                    className="w-full bg-bg-primary border border-border-accent rounded-md py-2 px-3 text-text-primary focus:ring-2 focus:ring-accent focus:outline-none transition disabled:opacity-50 disabled:cursor-not-allowed"
+                                    disabled={totalOpportunities === 0 && store.activeView !== 'agents'}
+                                />
+                                 <div className="flex items-center justify-between mt-3 md:mt-0 space-x-2">
+                                    <button
+                                        onClick={() => setIsFilterPanelOpen(prev => !prev)}
+                                        disabled={totalOpportunities === 0}
+                                        className="flex-shrink-0 flex items-center space-x-2 bg-border-accent hover:bg-accent-hover text-text-primary font-semibold py-2 px-4 rounded-md transition duration-300 disabled:opacity-50"
+                                    >
+                                        <TuneIcon className="w-5 h-5" />
+                                        <span>Filters</span>
+                                    </button>
+                                     {(totalOpportunities > 0 || store.activeView === 'agents') && <ViewToggle />}
+                                </div>
+                            </div>
+                            
+                            {isFilterPanelOpen && totalOpportunities > 0 && <AdvancedFiltersPanel />}
+
+                            {store.activeView === 'agents' ? (
+                                <AgentPanel />
+                            ) : (
+                                totalOpportunities > 0
+                                    ? <OpportunityTable opportunities={filteredOpportunities} />
+                                    : <EmptyStatePanel />
+                            )}
+                        </>
+                    )}
+                </>
+            )}
+        </>
+    );
+
+    return (
+        <div className="min-h-screen flex flex-col bg-bg-primary">
+            <Header />
+            <div className="flex flex-1 flex-col lg:flex-row overflow-hidden">
+                <div className="hidden lg:flex" style={{ width: store.sidebarWidth }}>
+                    <Sidebar 
+                        filteredOpportunities={filteredOpportunities} 
+                        totalOpportunities={totalOpportunities}
+                    />
+                </div>
+                
+                <main className={`flex-1 overflow-y-auto pb-24 lg:pb-8 ${!store.isAuthenticated ? 'p-0' : 'p-4 md:p-6 lg:p-8'}`}>
+                    {mainContent}
+                </main>
+            </div>
+            
+            <div className="lg:hidden">
+                <BottomNav onOpenSearchPanel={() => setIsMobileSearchPanelOpen(true)} />
+            </div>
+
+            {/* Mobile Search Panel (modal-like slide-up) */}
+            {isMobileSearchPanelOpen && (
+                 <div 
+                    className="fixed inset-0 bg-bg-primary bg-opacity-80 z-40 animate-fade-in lg:hidden"
+                    onClick={() => setIsMobileSearchPanelOpen(false)}
+                >
+                    <div 
+                        className="absolute inset-0 bg-bg-secondary shadow-xl flex flex-col animate-slide-in-bottom overflow-hidden"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <div className="p-4 border-b border-border-accent flex-shrink-0 flex items-center justify-between">
+                            <h2 className="text-xl font-bold text-text-primary">Dispatch Agent</h2>
+                             <button onClick={() => setIsMobileSearchPanelOpen(false)} className="p-1 rounded-full text-text-secondary hover:bg-border-accent">
+                                <CloseIcon className="w-6 h-6"/>
+                            </button>
+                        </div>
+                        <div className="flex-grow overflow-y-auto">
+                            <Sidebar 
+                                onDispatch={() => setIsMobileSearchPanelOpen(false)} 
+                                filteredOpportunities={filteredOpportunities}
+                                totalOpportunities={totalOpportunities}
+                            />
+                        </div>
+                    </div>
+                </div>
+            )}
+            
+            <ToastContainer />
+            <OnboardingTour start={shouldStartTour} />
+        </div>
+    );
+};
+
+export default HomePage;

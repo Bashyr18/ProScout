@@ -1,0 +1,27 @@
+{
+  "name": "proscout---procurement-opportunities-tracker",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "react": "18.2.0",
+    "@google/genai": "^1.8.0",
+    "zustand": "^4.5.4",
+    "@tanstack/react-virtual": "3.8.0",
+    "idb": "8.0.0",
+    "immer": "^10.1.1",
+    "date-fns": "^3.6.0",
+    "react-dom": "18.2.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.14.0",
+    "@vitejs/plugin-react": "^5.0.0",
+    "typescript": "~5.8.2",
+    "vite": "^6.2.0"
+  }
+}
