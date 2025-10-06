@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useAppStore } from '../store/useAppStore.ts';
+import { OPPORTUNITY_STATUSES } from '../constants.ts';
 
 import Header from './Header.tsx';
 import Sidebar from './Sidebar.tsx';
@@ -75,6 +76,79 @@ const HomePage: React.FC = () => {
             return true;
         });
     }, [allOpportunities, store.clientSearchQuery, store.advancedFilters]);
+
+    const sortedOpportunities = useMemo(() => {
+        const { field, direction } = store.opportunitySort;
+        const sorted = [...filteredOpportunities];
+        const multiplier = direction === 'asc' ? 1 : -1;
+
+        const compareText = (a?: string | null, b?: string | null) => {
+            const normalizedA = (a || '').toLowerCase();
+            const normalizedB = (b || '').toLowerCase();
+            if (normalizedA === normalizedB) return 0;
+            return normalizedA < normalizedB ? -1 : 1;
+        };
+
+        const getStatusRank = (status: string) => {
+            const index = OPPORTUNITY_STATUSES.indexOf(status as (typeof OPPORTUNITY_STATUSES)[number]);
+            return index === -1 ? OPPORTUNITY_STATUSES.length : index;
+        };
+
+        const parseDeadline = (deadline: string | null) => {
+            if (!deadline) return null;
+            const timestamp = new Date(deadline).getTime();
+            return Number.isNaN(timestamp) ? null : timestamp;
+        };
+
+        sorted.sort((a, b) => {
+            let comparison = 0;
+
+            switch (field) {
+                case 'title':
+                    comparison = compareText(a.Title, b.Title);
+                    break;
+                case 'organization':
+                    comparison = compareText(a.Organization, b.Organization);
+                    break;
+                case 'location':
+                    comparison = compareText(a.Location, b.Location);
+                    break;
+                case 'source':
+                    comparison = compareText(a.Source, b.Source);
+                    break;
+                case 'status':
+                    comparison = getStatusRank(a.status) - getStatusRank(b.status);
+                    break;
+                case 'deadline': {
+                    const aDeadline = parseDeadline(a.Deadline);
+                    const bDeadline = parseDeadline(b.Deadline);
+
+                    if (aDeadline === null && bDeadline === null) {
+                        comparison = 0;
+                    } else if (aDeadline === null) {
+                        comparison = 1;
+                    } else if (bDeadline === null) {
+                        comparison = -1;
+                    } else {
+                        comparison = aDeadline - bDeadline;
+                    }
+                    break;
+                }
+                case 'relevance':
+                default:
+                    comparison = a.Relevance - b.Relevance;
+                    break;
+            }
+
+            if (comparison === 0) {
+                return b.foundAt - a.foundAt;
+            }
+
+            return comparison * multiplier;
+        });
+
+        return sorted;
+    }, [filteredOpportunities, store.opportunitySort]);
 
     const totalOpportunities = useMemo(() => allOpportunities.length, [allOpportunities]);
 
@@ -162,7 +236,7 @@ const HomePage: React.FC = () => {
                                 <AgentPanel />
                             ) : (
                                 totalOpportunities > 0
-                                    ? <OpportunityTable opportunities={filteredOpportunities} />
+                                    ? <OpportunityTable opportunities={sortedOpportunities} />
                                     : <EmptyStatePanel />
                             )}
                         </>
@@ -177,8 +251,8 @@ const HomePage: React.FC = () => {
             <Header />
             <div className="flex flex-1 flex-col lg:flex-row overflow-hidden">
                 <div className="hidden lg:flex" style={{ width: store.sidebarWidth }}>
-                    <Sidebar 
-                        filteredOpportunities={filteredOpportunities} 
+                    <Sidebar
+                        filteredOpportunities={sortedOpportunities}
                         totalOpportunities={totalOpportunities}
                     />
                 </div>
@@ -209,9 +283,9 @@ const HomePage: React.FC = () => {
                             </button>
                         </div>
                         <div className="flex-grow overflow-y-auto">
-                            <Sidebar 
-                                onDispatch={() => setIsMobileSearchPanelOpen(false)} 
-                                filteredOpportunities={filteredOpportunities}
+                            <Sidebar
+                                onDispatch={() => setIsMobileSearchPanelOpen(false)}
+                                filteredOpportunities={sortedOpportunities}
                                 totalOpportunities={totalOpportunities}
                             />
                         </div>

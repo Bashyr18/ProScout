@@ -1,6 +1,6 @@
 import { StateCreator } from 'zustand';
 import { produce } from 'immer';
-import { UISlice, RootState, Agent, SearchParams, Toast, Theme } from '../types.ts';
+import { UISlice, RootState, Agent, SearchParams, Toast, Theme, OpportunitySortField } from '../types.ts';
 
 export const createUISlice: StateCreator<
     RootState,
@@ -18,6 +18,7 @@ export const createUISlice: StateCreator<
     isExploratorySearchEnabled: false,
     newlyAddedOpportunityIds: [],
     toasts: [],
+    opportunitySort: { field: 'relevance', direction: 'desc' },
     
     setSidebarWidth: (width) => set({ sidebarWidth: Math.max(320, Math.min(width, 600)) }),
     setLastSearchReport: (report) => set({ lastSearchReport: report }),
@@ -34,6 +35,29 @@ export const createUISlice: StateCreator<
     removeToast: (id) => {
         set(produce((state: RootState) => {
             state.toasts = state.toasts.filter((t: Toast) => t.id !== id);
+        }));
+    },
+    setOpportunitySort: (field, direction) => {
+        const defaultDirections: Record<OpportunitySortField, 'asc' | 'desc'> = {
+            relevance: 'desc',
+            deadline: 'asc',
+            status: 'asc',
+            title: 'asc',
+            organization: 'asc',
+            source: 'asc',
+            location: 'asc',
+        };
+
+        set(produce((state: RootState) => {
+            const currentSort = state.opportunitySort;
+            if (currentSort.field === field && direction === undefined) {
+                currentSort.direction = currentSort.direction === 'asc' ? 'desc' : 'asc';
+            } else {
+                state.opportunitySort = {
+                    field,
+                    direction: direction ?? defaultDirections[field],
+                };
+            }
         }));
     },
     setTheme: (theme) => {
