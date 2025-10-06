@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { useVirtualizer } from '@tanstack/react-virtual';
 import { useAppStore } from '../store/useAppStore.ts';
 import { Opportunity, OpportunitySortField } from '../types.ts';
 import { SearchIcon, ArrowDownIcon } from './icons.tsx';
@@ -98,27 +99,97 @@ const MobileSortControl: React.FC = () => {
 };
 
 const OpportunityTable: React.FC<OpportunityTableProps> = ({ opportunities }) => {
+    const [isDesktop, setIsDesktop] = useState(() => {
+        if (typeof window === 'undefined') {
+            return false;
+        }
+        return window.matchMedia('(min-width: 1024px)').matches;
+    });
+
+    useEffect(() => {
+        if (typeof window === 'undefined') {
+            return;
+        }
+
+        const mediaQuery = window.matchMedia('(min-width: 1024px)');
+        const handler = (event: MediaQueryListEvent) => setIsDesktop(event.matches);
+
+        setIsDesktop(mediaQuery.matches);
+        mediaQuery.addEventListener('change', handler);
+
+        return () => mediaQuery.removeEventListener('change', handler);
+    }, []);
+
+    const parentRef = useRef<HTMLDivElement | null>(null);
+
+    const rowVirtualizer = useVirtualizer({
+        count: opportunities.length,
+        getScrollElement: () => parentRef.current,
+        estimateSize: () => (isDesktop ? 112 : 196),
+        overscan: 8,
+    });
+
+    const virtualRows = rowVirtualizer.getVirtualItems();
+    const shouldVirtualize = useMemo(
+        () => isDesktop && opportunities.length > 40,
+        [isDesktop, opportunities.length],
+    );
 
     return (
         <div className="rounded-lg shadow-lg flex flex-col animate-slide-in-up lg:bg-bg-secondary">
             <TableHeader />
             <MobileSortControl />
 
-            <div className="flex-grow lg:overflow-auto">
-                {opportunities.length > 0 ? (
-                     <div className="space-y-3 lg:space-y-0">
-                        {opportunities.map((op) => (
-                           <OpportunityRow key={op.id} opportunity={op} />
-                        ))}
-                    </div>
-                ) : (
-                    <div className="flex flex-col items-center justify-center h-full text-center py-16 text-text-secondary bg-bg-secondary rounded-lg">
-                        <SearchIcon className="w-12 h-12 text-border-accent" />
-                        <p className="mt-4 font-bold text-lg text-text-primary">No matching opportunities found.</p>
-                        <p className="mt-1">Try adjusting your filters or dispatch the agent for a new search.</p>
-                    </div>
-                )}
-            </div>
+            {opportunities.length > 0 ? (
+                <div ref={parentRef} className="flex-grow lg:overflow-auto">
+                    {shouldVirtualize ? (
+                        <div
+                            style={{
+                                height: rowVirtualizer.getTotalSize(),
+                                position: 'relative',
+                            }}
+                        >
+                            {virtualRows.map((virtualRow) => {
+                                const opportunity = opportunities[virtualRow.index];
+                                const isLast = virtualRow.index === opportunities.length - 1;
+                                return (
+                                    <div
+                                        key={opportunity.id}
+                                        data-index={virtualRow.index}
+                                        ref={rowVirtualizer.measureElement}
+                                        style={{
+                                            position: 'absolute',
+                                            top: 0,
+                                            left: 0,
+                                            width: '100%',
+                                            transform: `translateY(${virtualRow.start}px)`,
+                                            paddingBottom: 12,
+                                        }}
+                                    >
+                                        <OpportunityRow opportunity={opportunity} showDivider={!isLast} />
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    ) : (
+                        <div className="space-y-3 lg:space-y-0">
+                            {opportunities.map((opportunity, index) => (
+                                <OpportunityRow
+                                    key={opportunity.id}
+                                    opportunity={opportunity}
+                                    showDivider={index !== opportunities.length - 1}
+                                />
+                            ))}
+                        </div>
+                    )}
+                </div>
+            ) : (
+                <div className="flex flex-col items-center justify-center h-full text-center py-16 text-text-secondary bg-bg-secondary rounded-lg">
+                    <SearchIcon className="w-12 h-12 text-border-accent" />
+                    <p className="mt-4 font-bold text-lg text-text-primary">No matching opportunities found.</p>
+                    <p className="mt-1">Try adjusting your filters or dispatch the agent for a new search.</p>
+                </div>
+            )}
         </div>
     );
 };

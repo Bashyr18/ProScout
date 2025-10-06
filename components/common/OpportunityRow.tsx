@@ -25,16 +25,18 @@ const RelevanceIndicator: React.FC<{ score: number }> = React.memo(({ score }) =
 
 interface OpportunityRowProps {
     opportunity: Opportunity;
+    showDivider?: boolean;
+    className?: string;
 }
 
-const OpportunityRow: React.FC<OpportunityRowProps> = ({ opportunity }) => {
+const OpportunityRow: React.FC<OpportunityRowProps> = ({ opportunity, showDivider = true, className = '' }) => {
     const { newlyAddedOpportunityIds } = useAppStore(state => ({
         newlyAddedOpportunityIds: state.newlyAddedOpportunityIds,
     }));
     const { openModal } = useModal();
     const daysLeft = calculateDaysLeft(opportunity.Deadline);
     const isNew = newlyAddedOpportunityIds.includes(opportunity.id);
-    
+
     const isValidDocUrl = opportunity.URL && opportunity.URL.startsWith('http');
     const isValidNoticeUrl = opportunity.noticePageUrl && opportunity.noticePageUrl.startsWith('http');
 
@@ -61,10 +63,41 @@ const OpportunityRow: React.FC<OpportunityRowProps> = ({ opportunity }) => {
         </div>
     );
 
+    const rowClasses = [
+        className,
+        'bg-bg-secondary',
+        'rounded-lg',
+        'shadow-md',
+        'p-4',
+        'animate-fade-in',
+        'border',
+        'border-border-accent',
+        'hover:border-accent',
+        'transition-colors',
+        'duration-200',
+        'cursor-pointer',
+        'lg:border-x-0',
+        'lg:border-t-0',
+        'lg:rounded-none',
+        'lg:p-0',
+        'lg:bg-transparent',
+        'lg:hover:bg-border-accent',
+    ];
+
+    if (showDivider) {
+        rowClasses.push('lg:border-b');
+    } else {
+        rowClasses.push('lg:border-b-0');
+    }
+
+    if (isNew) {
+        rowClasses.push('glow-fade-out');
+    }
+
     return (
-        <div 
+        <div
             onClick={() => openModal('opportunityDetail', { opportunity })}
-            className={`bg-bg-secondary rounded-lg shadow-md p-4 animate-fade-in border border-border-accent hover:border-accent transition-colors duration-200 cursor-pointer lg:border-b lg:border-x-0 lg:border-t-0 lg:rounded-none lg:p-0 lg:bg-transparent lg:hover:bg-border-accent ${isNew ? 'glow-fade-out' : ''}`}
+            className={rowClasses.filter(Boolean).join(' ')}
         >
              {/* --- Desktop Layout --- */}
             <div className="hidden lg:grid grid-cols-[minmax(0,_3fr)_minmax(0,_1.5fr)_1fr_1fr_1.5fr_1fr] gap-x-6 items-center px-6 py-4">

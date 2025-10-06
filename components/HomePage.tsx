@@ -15,8 +15,9 @@ import OnboardingTour from './OnboardingTour.tsx';
 import AdvancedFiltersPanel from './AdvancedFiltersPanel.tsx';
 import AgentPanel from './AgentPanel.tsx';
 import ToastContainer from './ToastContainer.tsx';
-import { TableCellsIcon, TuneIcon, RobotIcon, CloseIcon } from './icons.tsx';
+import { TableCellsIcon, TuneIcon, RobotIcon, CloseIcon, SearchIcon } from './icons.tsx';
 import EmptyStatePanel from './EmptyStatePanel.tsx';
+import ActiveFiltersSummary from './common/ActiveFiltersSummary.tsx';
 
 const HomePage: React.FC = () => {
     const [isMobileSearchPanelOpen, setIsMobileSearchPanelOpen] = useState(false);
@@ -162,19 +163,31 @@ const HomePage: React.FC = () => {
         }
     }, [store.isAuthenticated, totalOpportunities, store.isAgentSearching]);
     
+    const activeFiltersCount = useMemo(() => {
+        let count = 0;
+        if (store.clientSearchQuery.trim()) count += 1;
+        if (store.advancedFilters.status.length > 0) count += store.advancedFilters.status.length;
+        const [minRelevance, maxRelevance] = store.advancedFilters.relevance;
+        if (minRelevance > 0 || maxRelevance < 100) count += 1;
+        if (store.advancedFilters.deadline.start || store.advancedFilters.deadline.end) count += 1;
+        return count;
+    }, [store.clientSearchQuery, store.advancedFilters]);
+
     const ViewToggle = () => (
-         <div className="flex items-center bg-bg-primary p-1 rounded-full border border-border-accent">
+         <div className="flex items-center bg-bg-primary p-1 rounded-full border border-border-accent shadow-sm">
             <button
                 onClick={() => store.setActiveView('table')}
-                className={`flex items-center space-x-2 text-sm font-semibold px-4 py-1.5 rounded-full transition-colors ${store.activeView === 'table' ? 'bg-accent text-accent-text' : 'text-text-secondary hover:bg-border-accent'}`}
+                aria-pressed={store.activeView === 'table'}
+                className={`flex items-center space-x-2 text-sm font-semibold px-4 py-1.5 rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent ${store.activeView === 'table' ? 'bg-accent text-accent-text shadow-sm' : 'text-text-secondary hover:bg-border-accent'}`}
             >
                 <TableCellsIcon className="w-5 h-5" />
                 <span>Table</span>
             </button>
              {store.hasProFeatures() && (
-                 <button
+                <button
                     onClick={() => store.setActiveView('agents')}
-                    className={`flex items-center space-x-2 text-sm font-semibold px-4 py-1.5 rounded-full transition-colors ${store.activeView === 'agents' ? 'bg-accent text-accent-text' : 'text-text-secondary hover:bg-border-accent'}`}
+                    aria-pressed={store.activeView === 'agents'}
+                    className={`flex items-center space-x-2 text-sm font-semibold px-4 py-1.5 rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent ${store.activeView === 'agents' ? 'bg-accent text-accent-text shadow-sm' : 'text-text-secondary hover:bg-border-accent'}`}
                 >
                     <RobotIcon className="w-5 h-5" />
                     <span>Agents</span>
@@ -209,27 +222,53 @@ const HomePage: React.FC = () => {
                             <InsightsPanel insights={store.insights} isLoading={store.isGeneratingInsights} />
                             
                             <div className="flex flex-col md:flex-row md:items-center md:space-x-4 mb-4" data-tour="filter-bar">
-                                <input
-                                    type="text"
-                                    value={store.clientSearchQuery}
-                                    onChange={(e) => store.setClientSearchQuery(e.target.value)}
-                                    placeholder="Filter results by keyword..."
-                                    className="w-full bg-bg-primary border border-border-accent rounded-md py-2 px-3 text-text-primary focus:ring-2 focus:ring-accent focus:outline-none transition disabled:opacity-50 disabled:cursor-not-allowed"
-                                    disabled={totalOpportunities === 0 && store.activeView !== 'agents'}
-                                />
+                                <div className="relative flex-1">
+                                    <SearchIcon className="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-text-secondary" />
+                                    <input
+                                        type="text"
+                                        value={store.clientSearchQuery}
+                                        onChange={(e) => store.setClientSearchQuery(e.target.value)}
+                                        placeholder="Filter results by keyword..."
+                                        className="w-full bg-bg-primary border border-border-accent rounded-md py-2 pl-10 pr-3 text-text-primary focus:ring-2 focus:ring-accent focus:outline-none transition disabled:opacity-50 disabled:cursor-not-allowed"
+                                        disabled={totalOpportunities === 0 && store.activeView !== 'agents'}
+                                        aria-label="Filter opportunities by keyword"
+                                    />
+                                </div>
                                  <div className="flex items-center justify-between mt-3 md:mt-0 space-x-2">
                                     <button
                                         onClick={() => setIsFilterPanelOpen(prev => !prev)}
                                         disabled={totalOpportunities === 0}
                                         className="flex-shrink-0 flex items-center space-x-2 bg-border-accent hover:bg-accent-hover text-text-primary font-semibold py-2 px-4 rounded-md transition duration-300 disabled:opacity-50"
+                                        aria-expanded={isFilterPanelOpen}
                                     >
                                         <TuneIcon className="w-5 h-5" />
-                                        <span>Filters</span>
+                                        <span className="flex items-center space-x-2">
+                                            <span>Filters</span>
+                                            {activeFiltersCount > 0 && (
+                                                <span className="inline-flex items-center justify-center rounded-full bg-accent px-2 py-0.5 text-xs font-bold text-accent-text">
+                                                    {activeFiltersCount}
+                                                </span>
+                                            )}
+                                        </span>
                                     </button>
                                      {(totalOpportunities > 0 || store.activeView === 'agents') && <ViewToggle />}
                                 </div>
                             </div>
-                            
+
+                            <div className="mb-3 flex flex-col gap-3">
+                                <div className="flex flex-wrap items-center justify-between text-xs font-medium text-text-secondary uppercase tracking-wide">
+                                    <span>
+                                        Showing <span className="text-text-primary">{sortedOpportunities.length}</span> {sortedOpportunities.length === 1 ? 'opportunity' : 'opportunities'}
+                                    </span>
+                                    {store.isAgentSearching ? (
+                                        <span className="text-accent">Agent is scouting…</span>
+                                    ) : (
+                                        <span>Last updated {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                                    )}
+                                </div>
+                                <ActiveFiltersSummary />
+                            </div>
+
                             {isFilterPanelOpen && totalOpportunities > 0 && <AdvancedFiltersPanel />}
 
                             {store.activeView === 'agents' ? (
