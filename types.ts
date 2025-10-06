@@ -92,6 +92,14 @@ export interface AdvancedFilters {
     deadline: { start: string | null; end: string | null };
 }
 
+export type OpportunitySortField = 'relevance' | 'deadline' | 'status' | 'title' | 'organization' | 'source' | 'location';
+export type OpportunitySortDirection = 'asc' | 'desc';
+
+export interface OpportunitySort {
+    field: OpportunitySortField;
+    direction: OpportunitySortDirection;
+}
+
 export interface Agent {
     id:string;
     userId: string;
@@ -202,6 +210,7 @@ export interface UISliceState {
     isExploratorySearchEnabled: boolean;
     newlyAddedOpportunityIds: string[];
     toasts: Toast[];
+    opportunitySort: OpportunitySort;
 }
 export interface UISliceActions {
     setSidebarWidth: (width: number) => void;
@@ -218,6 +227,7 @@ export interface UISliceActions {
     setNewlyAddedOpportunityIds: (ids: string[]) => void;
     addToast: (toast: Omit<Toast, 'id'>) => void;
     removeToast: (id: string) => void;
+    setOpportunitySort: (field: OpportunitySortField, direction?: OpportunitySortDirection) => void;
 }
 export type UISlice = UISliceState & UISliceActions;
 
